@@ -7,6 +7,7 @@ import Groups from './pages/Groups';
 import GroupDetail from './pages/GroupDetail';
 import AddExpense from './pages/AddExpense';
 import ExpenseDetail from './pages/ExpenseDetail';
+import EditExpense from './pages/EditExpense';
 import Balances from './pages/Balances';
 
 const ProtectedRoute = ({ children }) => {
@@ -27,6 +28,7 @@ const AppRoutes = () => {
       <Route path="/groups/:id" element={<ProtectedRoute><GroupDetail /></ProtectedRoute>} />
       <Route path="/groups/:id/expenses/new" element={<ProtectedRoute><AddExpense /></ProtectedRoute>} />
       <Route path="/expenses/:id" element={<ProtectedRoute><ExpenseDetail /></ProtectedRoute>} />
+      <Route path="/expenses/:id/edit" element={<ProtectedRoute><EditExpense /></ProtectedRoute>} />
       <Route path="/balances" element={<ProtectedRoute><Balances /></ProtectedRoute>} />
     </Routes>
   );

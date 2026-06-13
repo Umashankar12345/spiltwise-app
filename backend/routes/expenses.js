@@ -5,10 +5,87 @@ const router = express.Router();
 
 router.use(authMiddleware);
 
+// GET /api/expenses/:id
+router.get('/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const expenseRes = await db.query('SELECT * FROM expenses WHERE id = $1', [id]);
+    if (expenseRes.rows.length === 0) {
+      return res.status(404).json({ error: 'Expense not found' });
+    }
+    const expense = expenseRes.rows[0];
+
+    const payersRes = await db.query(
+      `SELECT ep.*, u.name 
+       FROM expense_payers ep 
+       JOIN users u ON ep.user_id = u.id 
+       WHERE ep.expense_id = $1`, 
+      [id]
+    );
+    const splitsRes = await db.query(
+      `SELECT es.*, u.name 
+       FROM expense_splits es 
+       JOIN users u ON es.user_id = u.id 
+       WHERE es.expense_id = $1`, 
+      [id]
+    );
+
+    res.json({
+      ...expense,
+      payers: payersRes.rows,
+      splits: splitsRes.rows
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // PUT /api/expenses/:id
 router.put('/:id', async (req, res) => {
   const { id } = req.params;
   const { description, total_amount, split_type, payers, splits } = req.body;
+  
+  let finalSplits = [...splits];
+  const tAmount = parseFloat(total_amount);
+
+  if (split_type === 'percentage') {
+    let totalPct = finalSplits.reduce((sum, s) => sum + parseFloat(s.percentage || 0), 0);
+    if (Math.abs(totalPct - 100) > 0.1) {
+      return res.status(400).json({ error: 'Percentages must sum to 100' });
+    }
+    let calculatedSum = 0;
+    for (let i = 0; i < finalSplits.length; i++) {
+      let pct = parseFloat(finalSplits[i].percentage || 0);
+      let amt = Math.round((tAmount * pct / 100) * 100) / 100;
+      finalSplits[i].amount_owed = amt;
+      calculatedSum += amt;
+    }
+    // Handle remainder
+    let diff = Math.round((tAmount - calculatedSum) * 100) / 100;
+    if (diff !== 0 && finalSplits.length > 0) {
+      finalSplits[finalSplits.length - 1].amount_owed = Math.round((finalSplits[finalSplits.length - 1].amount_owed + diff) * 100) / 100;
+    }
+  } else if (split_type === 'share') {
+    let totalShares = finalSplits.reduce((sum, s) => sum + parseInt(s.shares || 0, 10), 0);
+    if (totalShares <= 0) {
+      return res.status(400).json({ error: 'Total shares must be greater than zero' });
+    }
+    let calculatedSum = 0;
+    for (let i = 0; i < finalSplits.length; i++) {
+      let shares = parseInt(finalSplits[i].shares || 0, 10);
+      if (shares < 0) return res.status(400).json({ error: 'Shares cannot be negative' });
+      let amt = Math.round((tAmount * shares / totalShares) * 100) / 100;
+      finalSplits[i].amount_owed = amt;
+      calculatedSum += amt;
+    }
+    // Handle remainder
+    let diff = Math.round((tAmount - calculatedSum) * 100) / 100;
+    if (diff !== 0 && finalSplits.length > 0) {
+      finalSplits[finalSplits.length - 1].amount_owed = Math.round((finalSplits[finalSplits.length - 1].amount_owed + diff) * 100) / 100;
+    }
+  }
+
   try {
     await db.query('BEGIN');
     
@@ -38,7 +115,7 @@ router.put('/:id', async (req, res) => {
     }
 
     // Re-insert splits
-    for (const split of splits) {
+    for (const split of finalSplits) {
       await db.query(
         `INSERT INTO expense_splits (expense_id, user_id, amount_owed, percentage, shares) 
          VALUES ($1, $2, $3, $4, $5)`,
@@ -72,7 +149,11 @@ router.get('/:id/messages', async (req, res) => {
   const { id } = req.params;
   try {
     const result = await db.query(
-      'SELECT * FROM expense_messages WHERE expense_id = $1 ORDER BY created_at ASC',
+      `SELECT m.*, u.name as user_name 
+       FROM expense_messages m 
+       JOIN users u ON m.user_id = u.id 
+       WHERE m.expense_id = $1 
+       ORDER BY m.created_at ASC`,
       [id]
     );
     res.json(result.rows);

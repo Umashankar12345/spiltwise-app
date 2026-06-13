@@ -126,6 +126,28 @@ router.post('/:id/invites/:inviteId/accept', async (req, res) => {
 router.delete('/:id/members/:userId', async (req, res) => {
   const { id, userId } = req.params;
   try {
+    const balanceQuery = `
+      WITH paid AS (
+        SELECT COALESCE(SUM(amount_paid), 0) as val FROM expense_payers ep JOIN expenses e ON ep.expense_id = e.id WHERE e.group_id = $1 AND ep.user_id = $2
+      ),
+      owed AS (
+        SELECT COALESCE(SUM(amount_owed), 0) as val FROM expense_splits es JOIN expenses e ON es.expense_id = e.id WHERE e.group_id = $1 AND es.user_id = $2
+      ),
+      set_paid AS (
+        SELECT COALESCE(SUM(amount), 0) as val FROM settlements WHERE group_id = $1 AND paid_by = $2
+      ),
+      set_recv AS (
+        SELECT COALESCE(SUM(amount), 0) as val FROM settlements WHERE group_id = $1 AND paid_to = $2
+      )
+      SELECT (SELECT val FROM paid) - (SELECT val FROM owed) + (SELECT val FROM set_paid) - (SELECT val FROM set_recv) as net_balance
+    `;
+    const balanceRes = await db.query(balanceQuery, [id, userId]);
+    const netBalance = parseFloat(balanceRes.rows[0].net_balance || 0);
+
+    if (Math.abs(netBalance) > 0.01) {
+      return res.status(400).json({ error: 'Cannot remove member: They have unsettled balances in this group.' });
+    }
+
     await db.query('DELETE FROM group_members WHERE group_id = $1 AND user_id = $2', [id, userId]);
     res.json({ message: 'Member removed' });
   } catch (err) {
