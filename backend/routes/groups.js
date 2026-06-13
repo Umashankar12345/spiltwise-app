@@ -171,8 +171,46 @@ router.get('/:id/expenses', async (req, res) => {
 router.post('/:id/expenses', async (req, res) => {
   const { id } = req.params;
   const { description, total_amount, split_type, payers, splits } = req.body;
-  // payers: [{user_id, amount_paid}]
-  // splits: [{user_id, amount_owed, percentage, shares}]
+
+  let finalSplits = [...splits];
+  const tAmount = parseFloat(total_amount);
+
+  if (split_type === 'percentage') {
+    let totalPct = finalSplits.reduce((sum, s) => sum + parseFloat(s.percentage || 0), 0);
+    if (Math.abs(totalPct - 100) > 0.1) {
+      return res.status(400).json({ error: 'Percentages must sum to 100' });
+    }
+    let calculatedSum = 0;
+    for (let i = 0; i < finalSplits.length; i++) {
+      let pct = parseFloat(finalSplits[i].percentage || 0);
+      let amt = Math.round((tAmount * pct / 100) * 100) / 100;
+      finalSplits[i].amount_owed = amt;
+      calculatedSum += amt;
+    }
+    // Handle remainder
+    let diff = Math.round((tAmount - calculatedSum) * 100) / 100;
+    if (diff !== 0 && finalSplits.length > 0) {
+      finalSplits[finalSplits.length - 1].amount_owed = Math.round((finalSplits[finalSplits.length - 1].amount_owed + diff) * 100) / 100;
+    }
+  } else if (split_type === 'share') {
+    let totalShares = finalSplits.reduce((sum, s) => sum + parseInt(s.shares || 0, 10), 0);
+    if (totalShares <= 0) {
+      return res.status(400).json({ error: 'Total shares must be greater than zero' });
+    }
+    let calculatedSum = 0;
+    for (let i = 0; i < finalSplits.length; i++) {
+      let shares = parseInt(finalSplits[i].shares || 0, 10);
+      if (shares < 0) return res.status(400).json({ error: 'Shares cannot be negative' });
+      let amt = Math.round((tAmount * shares / totalShares) * 100) / 100;
+      finalSplits[i].amount_owed = amt;
+      calculatedSum += amt;
+    }
+    // Handle remainder
+    let diff = Math.round((tAmount - calculatedSum) * 100) / 100;
+    if (diff !== 0 && finalSplits.length > 0) {
+      finalSplits[finalSplits.length - 1].amount_owed = Math.round((finalSplits[finalSplits.length - 1].amount_owed + diff) * 100) / 100;
+    }
+  }
 
   try {
     await db.query('BEGIN');
@@ -190,7 +228,7 @@ router.post('/:id/expenses', async (req, res) => {
       );
     }
 
-    for (const split of splits) {
+    for (const split of finalSplits) {
       await db.query(
         `INSERT INTO expense_splits (expense_id, user_id, amount_owed, percentage, shares) 
          VALUES ($1, $2, $3, $4, $5)`,

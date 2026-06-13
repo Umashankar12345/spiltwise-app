@@ -16,6 +16,8 @@ const AddExpense = () => {
   const [payers, setPayers] = useState({});
   // splits state: { userId: amount } for 'unequal'
   const [splits, setSplits] = useState({});
+  const [percentages, setPercentages] = useState({});
+  const [shares, setShares] = useState({});
 
   useEffect(() => {
     const fetchMembers = async () => {
@@ -38,10 +40,6 @@ const AddExpense = () => {
 
   const handlePayerChange = (userId, amount) => {
     setPayers(prev => ({ ...prev, [userId]: amount }));
-  };
-
-  const handleSplitChange = (userId, amount) => {
-    setSplits(prev => ({ ...prev, [userId]: amount }));
   };
 
   const handleSubmit = async (e) => {
@@ -81,6 +79,28 @@ const AddExpense = () => {
         alert(`Total splits ($${calcSplitTotal.toFixed(2)}) does not match expense amount ($${expenseTotal.toFixed(2)})`);
         return;
       }
+    } else if (splitType === 'percentage') {
+      let totalPct = 0;
+      for (const m of members) {
+        const pct = parseFloat(percentages[m.id] || 0);
+        totalPct += pct;
+        finalSplits.push({ user_id: m.id, amount_owed: 0, percentage: pct, shares: null });
+      }
+      if (Math.abs(totalPct - 100) > 0.1) {
+        alert(`Total percentage must sum to 100% (currently ${totalPct.toFixed(2)}%)`);
+        return;
+      }
+    } else if (splitType === 'share') {
+      let totalShares = 0;
+      for (const m of members) {
+        const s = parseInt(shares[m.id] || 0, 10);
+        totalShares += s;
+        finalSplits.push({ user_id: m.id, amount_owed: 0, percentage: null, shares: s });
+      }
+      if (totalShares <= 0) {
+        alert('Total shares must be greater than zero');
+        return;
+      }
     }
 
     try {
@@ -108,6 +128,8 @@ const AddExpense = () => {
       console.error(err);
     }
   };
+
+  const totalShares = members.reduce((sum, member) => sum + parseInt(shares[member.id] || 0, 10), 0);
 
   return (
     <div className="max-w-2xl mx-auto mt-8 bg-white p-8 rounded-lg shadow-sm">
@@ -166,6 +188,8 @@ const AddExpense = () => {
           >
             <option value="equal">Equally</option>
             <option value="unequal">Unequally (Exact amounts)</option>
+            <option value="percentage">By Percentages</option>
+            <option value="share">By Shares</option>
           </select>
 
           {splitType === 'unequal' && members.map(m => (
@@ -177,10 +201,48 @@ const AddExpense = () => {
                 placeholder="0.00"
                 className="flex-1 p-2 border rounded focus:ring-2 focus:ring-primary"
                 value={splits[m.id] !== undefined ? splits[m.id] : ''} 
-                onChange={e => handleSplitChange(m.id, e.target.value)} 
+                onChange={e => setSplits(prev => ({ ...prev, [m.id]: e.target.value }))} 
               />
             </div>
           ))}
+
+          {splitType === 'percentage' && members.map(m => {
+            const pct = parseFloat(percentages[m.id] || 0);
+            const computedAmt = (parseFloat(totalAmount || 0) * (pct / 100)).toFixed(2);
+            return (
+              <div key={m.id} className="flex items-center gap-4 mb-2">
+                <span className="w-32 truncate">{m.name}</span>
+                <div className="flex-1 flex items-center gap-2">
+                  <input 
+                    type="number" step="0.01" placeholder="0" className="w-24 p-2 border rounded focus:ring-2 focus:ring-primary"
+                    value={percentages[m.id] !== undefined ? percentages[m.id] : ''} 
+                    onChange={e => setPercentages(prev => ({ ...prev, [m.id]: e.target.value }))} 
+                  />
+                  <span>%</span>
+                  <span className="text-gray-500 font-medium ml-4">${computedAmt}</span>
+                </div>
+              </div>
+            );
+          })}
+
+          {splitType === 'share' && members.map(m => {
+            const userShare = parseInt(shares[m.id] || 0, 10);
+            const computedAmt = totalShares > 0 ? (parseFloat(totalAmount || 0) * (userShare / totalShares)).toFixed(2) : "0.00";
+            return (
+              <div key={m.id} className="flex items-center gap-4 mb-2">
+                <span className="w-32 truncate">{m.name}</span>
+                <div className="flex-1 flex items-center gap-2">
+                  <input 
+                    type="number" step="1" placeholder="1" className="w-24 p-2 border rounded focus:ring-2 focus:ring-primary"
+                    value={shares[m.id] !== undefined ? shares[m.id] : ''} 
+                    onChange={e => setShares(prev => ({ ...prev, [m.id]: e.target.value }))} 
+                  />
+                  <span>shares</span>
+                  <span className="text-gray-500 font-medium ml-4">${computedAmt}</span>
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         <div className="pt-4 border-t border-gray-100 flex gap-4">

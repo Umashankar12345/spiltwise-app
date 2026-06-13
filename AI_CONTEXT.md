@@ -42,7 +42,7 @@ Reverse-engineered from general knowledge and reference screenshots of Splitwise
 - **Limitation**: Automated tests (unit tests for split calculations, rounding errors, and integration tests for API endpoints) were initially planned but ultimately omitted due to time constraints during the build phase. Manual verification was used instead. The code relies on database-level DECIMAL types to handle currency precision.
 
 ### 3.3 Expense Split Calculation Logic
-- The backend successfully accepts arrays of `payers` and `splits`. The frontend form for `/groups/:id/expenses/new` now dynamically supports multiple payers and exact split logic by fetching group members, overcoming the previous limitation.
+- The backend and frontend fully support all four required split types: `equal`, `unequal`, `percentage`, and `share`. The frontend `AddExpense` form dynamically supports multiple payers and live split logic by fetching group members. For percentage and share splits, the backend recomputes the exact amounts owed and properly distributes any rounding remainders.
 
 ## 4. Deployment Strategy & Changelog
 
