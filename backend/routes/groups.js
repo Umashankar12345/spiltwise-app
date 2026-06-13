@@ -46,6 +46,24 @@ router.post('/', async (req, res) => {
   }
 });
 
+// GET /api/groups/invites/pending
+router.get('/invites/pending', async (req, res) => {
+  try {
+    const result = await db.query(
+      `SELECT gi.*, g.name as group_name, u.name as invited_by_name 
+       FROM group_invites gi
+       JOIN groups g ON gi.group_id = g.id
+       LEFT JOIN users u ON gi.invited_by = u.id
+       WHERE gi.invited_email = $1 AND gi.status = 'pending'`,
+      [req.user.email]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // POST /api/groups/:id/invite
 router.post('/:id/invite', async (req, res) => {
   const { invited_email } = req.body;
@@ -116,6 +134,24 @@ router.delete('/:id/members/:userId', async (req, res) => {
   }
 });
 
+// GET /api/groups/:id/members
+router.get('/:id/members', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await db.query(
+      `SELECT u.id, u.name, u.email 
+       FROM group_members gm 
+       JOIN users u ON gm.user_id = u.id 
+       WHERE gm.group_id = $1`,
+      [id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // GET /api/groups/:id/expenses
 router.get('/:id/expenses', async (req, res) => {
   const { id } = req.params;
@@ -177,7 +213,35 @@ router.post('/:id/settlements', async (req, res) => {
   const { paid_to, amount } = req.body;
   const paid_by = req.user.id;
   try {
-    // Basic validation, further validation against computed balances would go here
+    if (amount <= 0) return res.status(400).json({ error: 'Amount must be greater than zero' });
+
+    // Validate against computed balances
+    const balanceQuery = `
+      WITH paid AS (
+        SELECT COALESCE(SUM(amount_paid), 0) as val FROM expense_payers ep JOIN expenses e ON ep.expense_id = e.id WHERE e.group_id = $1 AND ep.user_id = $2
+      ),
+      owed AS (
+        SELECT COALESCE(SUM(amount_owed), 0) as val FROM expense_splits es JOIN expenses e ON es.expense_id = e.id WHERE e.group_id = $1 AND es.user_id = $2
+      ),
+      set_paid AS (
+        SELECT COALESCE(SUM(amount), 0) as val FROM settlements WHERE group_id = $1 AND paid_by = $2
+      ),
+      set_recv AS (
+        SELECT COALESCE(SUM(amount), 0) as val FROM settlements WHERE group_id = $1 AND paid_to = $2
+      )
+      SELECT (SELECT val FROM paid) - (SELECT val FROM owed) + (SELECT val FROM set_paid) - (SELECT val FROM set_recv) as net_balance
+    `;
+
+    const paidByBalanceRes = await db.query(balanceQuery, [id, paid_by]);
+    const paidByBalance = parseFloat(paidByBalanceRes.rows[0].net_balance || 0);
+
+    if (paidByBalance >= -0.01) { // Allowing tiny floating point diffs
+      return res.status(400).json({ error: 'You do not owe any money in this group' });
+    }
+    if (amount > Math.abs(paidByBalance) + 0.01) {
+      return res.status(400).json({ error: 'Settlement amount cannot exceed your total owed amount' });
+    }
+
     const result = await db.query(
       `INSERT INTO settlements (group_id, paid_by, paid_to, amount) 
        VALUES ($1, $2, $3, $4) RETURNING *`,
