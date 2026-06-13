@@ -1,6 +1,6 @@
 import React, { useState, useContext } from 'react';
-import { AuthContext } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
+import { AuthContext } from '../context/AuthContext';
 
 const Signup = () => {
   const [name, setName] = useState('');
@@ -26,51 +26,58 @@ const Signup = () => {
       }
     } catch (err) {
       console.error(err);
-      alert('Signup failed');
     }
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold mb-6 text-center text-dark">Sign Up</h2>
-      <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <label className="block text-gray-700 mb-2">Name</label>
-          <input 
-            type="text" 
-            className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
-            value={name} 
-            onChange={e => setName(e.target.value)} 
-            required 
-          />
+    <div className="min-h-[80vh] flex items-center justify-center bg-slate-50">
+      <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 w-full max-w-md">
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Create an account</h2>
+          <p className="text-slate-500 mt-2">Join to start splitting expenses</p>
         </div>
-        <div className="mb-4">
-          <label className="block text-gray-700 mb-2">Email</label>
-          <input 
-            type="email" 
-            className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
-            value={email} 
-            onChange={e => setEmail(e.target.value)} 
-            required 
-          />
-        </div>
-        <div className="mb-6">
-          <label className="block text-gray-700 mb-2">Password</label>
-          <input 
-            type="password" 
-            className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
-            value={password} 
-            onChange={e => setPassword(e.target.value)} 
-            required 
-          />
-        </div>
-        <button type="submit" className="w-full bg-primary text-white p-2 rounded hover:bg-primary-dark transition duration-200">
-          Sign Up
-        </button>
-      </form>
-      <p className="mt-4 text-center">
-        Already have an account? <Link to="/login" className="text-primary">Log in</Link>
-      </p>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label className="block text-slate-700 font-medium mb-2 text-sm">Full Name</label>
+            <input 
+              type="text" 
+              placeholder="Jane Doe"
+              className="w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+              value={name} 
+              onChange={e => setName(e.target.value)} 
+              required 
+            />
+          </div>
+          <div>
+            <label className="block text-slate-700 font-medium mb-2 text-sm">Email Address</label>
+            <input 
+              type="email" 
+              placeholder="you@example.com"
+              className="w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+              value={email} 
+              onChange={e => setEmail(e.target.value)} 
+              required 
+            />
+          </div>
+          <div>
+            <label className="block text-slate-700 font-medium mb-2 text-sm">Password</label>
+            <input 
+              type="password" 
+              placeholder="••••••••"
+              className="w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+              value={password} 
+              onChange={e => setPassword(e.target.value)} 
+              required 
+            />
+          </div>
+          <button type="submit" className="w-full bg-indigo-600 text-white p-3 rounded-lg hover:bg-indigo-700 font-medium transition duration-200">
+            Sign Up
+          </button>
+        </form>
+        <p className="mt-6 text-center text-slate-600 text-sm">
+          Already have an account? <Link to="/login" className="text-indigo-600 hover:text-indigo-800 font-semibold transition">Log in</Link>
+        </p>
+      </div>
     </div>
   );
 };

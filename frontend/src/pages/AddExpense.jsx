@@ -12,9 +12,7 @@ const AddExpense = () => {
   const [splitType, setSplitType] = useState('equal');
   const [members, setMembers] = useState([]);
   
-  // payers state: { userId: amount }
   const [payers, setPayers] = useState({});
-  // splits state: { userId: amount } for 'unequal'
   const [splits, setSplits] = useState({});
   const [percentages, setPercentages] = useState({});
   const [shares, setShares] = useState({});
@@ -28,7 +26,6 @@ const AddExpense = () => {
         if (res.ok) {
           const data = await res.json();
           setMembers(data);
-          // Default payer is current user
           if (user) {
             setPayers({ [user.id]: '' });
           }
@@ -45,7 +42,6 @@ const AddExpense = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Calculate total paid
     let calcTotal = 0;
     const finalPayers = [];
     for (const [uid, amt] of Object.entries(payers)) {
@@ -132,29 +128,29 @@ const AddExpense = () => {
   const totalShares = members.reduce((sum, member) => sum + parseInt(shares[member.id] || 0, 10), 0);
 
   return (
-    <div className="max-w-2xl mx-auto mt-8 bg-white p-8 rounded-lg shadow-sm">
-      <h2 className="text-2xl font-bold mb-6">Add an Expense</h2>
+    <div className="max-w-2xl mx-auto mt-8 bg-white p-8 rounded-xl shadow-sm border border-slate-200">
+      <h2 className="text-2xl font-extrabold text-slate-900 mb-6">Add an Expense</h2>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label className="block text-gray-700 font-medium mb-2">Description</label>
+          <label className="block text-slate-700 font-semibold mb-2 text-sm">Description</label>
           <input 
             type="text" 
             placeholder="e.g. Dinner at Mario's"
-            className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary focus:outline-none"
+            className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
             value={description} 
             onChange={e => setDescription(e.target.value)} 
             required 
           />
         </div>
         <div>
-          <label className="block text-gray-700 font-medium mb-2">Total Amount</label>
+          <label className="block text-slate-700 font-semibold mb-2 text-sm">Total Amount</label>
           <div className="relative">
-            <span className="absolute left-3 top-3 text-gray-500">$</span>
+            <span className="absolute left-4 top-3.5 text-slate-500 font-medium">$</span>
             <input 
               type="number" 
               step="0.01"
               placeholder="0.00"
-              className="w-full p-3 pl-8 border rounded-lg focus:ring-2 focus:ring-primary focus:outline-none"
+              className="w-full p-3 pl-8 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition text-lg font-medium"
               value={totalAmount} 
               onChange={e => setTotalAmount(e.target.value)} 
               required 
@@ -162,27 +158,32 @@ const AddExpense = () => {
           </div>
         </div>
         
-        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-          <label className="block text-gray-700 font-medium mb-2">Who Paid?</label>
-          {members.map(m => (
-            <div key={m.id} className="flex items-center gap-4 mb-2">
-              <span className="w-32 truncate">{m.name}</span>
-              <input 
-                type="number" 
-                step="0.01"
-                placeholder="0.00"
-                className="flex-1 p-2 border rounded focus:ring-2 focus:ring-primary"
-                value={payers[m.id] !== undefined ? payers[m.id] : ''} 
-                onChange={e => handlePayerChange(m.id, e.target.value)} 
-              />
-            </div>
-          ))}
+        <div className="bg-slate-50 p-5 rounded-xl border border-slate-200">
+          <label className="block text-slate-800 font-bold mb-3">Who Paid?</label>
+          <div className="space-y-3">
+            {members.map(m => (
+              <div key={m.id} className="flex items-center gap-4">
+                <span className="w-32 truncate text-slate-700 font-medium">{m.name}</span>
+                <div className="relative flex-1">
+                  <span className="absolute left-3 top-2.5 text-slate-400 text-sm">$</span>
+                  <input 
+                    type="number" 
+                    step="0.01"
+                    placeholder="0.00"
+                    className="w-full pl-7 p-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none transition"
+                    value={payers[m.id] !== undefined ? payers[m.id] : ''} 
+                    onChange={e => handlePayerChange(m.id, e.target.value)} 
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-          <label className="block text-gray-700 font-medium mb-2">Split Type</label>
+        <div className="bg-slate-50 p-5 rounded-xl border border-slate-200">
+          <label className="block text-slate-800 font-bold mb-3">Split Type</label>
           <select 
-            className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary focus:outline-none mb-4"
+            className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none mb-5 bg-white transition text-slate-700"
             value={splitType}
             onChange={e => setSplitType(e.target.value)}
           >
@@ -192,62 +193,73 @@ const AddExpense = () => {
             <option value="share">By Shares</option>
           </select>
 
-          {splitType === 'unequal' && members.map(m => (
-            <div key={m.id} className="flex items-center gap-4 mb-2">
-              <span className="w-32 truncate">{m.name}</span>
-              <input 
-                type="number" 
-                step="0.01"
-                placeholder="0.00"
-                className="flex-1 p-2 border rounded focus:ring-2 focus:ring-primary"
-                value={splits[m.id] !== undefined ? splits[m.id] : ''} 
-                onChange={e => setSplits(prev => ({ ...prev, [m.id]: e.target.value }))} 
-              />
-            </div>
-          ))}
-
-          {splitType === 'percentage' && members.map(m => {
-            const pct = parseFloat(percentages[m.id] || 0);
-            const computedAmt = (parseFloat(totalAmount || 0) * (pct / 100)).toFixed(2);
-            return (
-              <div key={m.id} className="flex items-center gap-4 mb-2">
-                <span className="w-32 truncate">{m.name}</span>
-                <div className="flex-1 flex items-center gap-2">
+          <div className="space-y-3">
+            {splitType === 'unequal' && members.map(m => (
+              <div key={m.id} className="flex items-center gap-4">
+                <span className="w-32 truncate text-slate-700 font-medium">{m.name}</span>
+                <div className="relative flex-1">
+                  <span className="absolute left-3 top-2.5 text-slate-400 text-sm">$</span>
                   <input 
-                    type="number" step="0.01" placeholder="0" className="w-24 p-2 border rounded focus:ring-2 focus:ring-primary"
-                    value={percentages[m.id] !== undefined ? percentages[m.id] : ''} 
-                    onChange={e => setPercentages(prev => ({ ...prev, [m.id]: e.target.value }))} 
+                    type="number" 
+                    step="0.01"
+                    placeholder="0.00"
+                    className="w-full pl-7 p-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none transition"
+                    value={splits[m.id] !== undefined ? splits[m.id] : ''} 
+                    onChange={e => setSplits(prev => ({ ...prev, [m.id]: e.target.value }))} 
                   />
-                  <span>%</span>
-                  <span className="text-gray-500 font-medium ml-4">${computedAmt}</span>
                 </div>
               </div>
-            );
-          })}
+            ))}
 
-          {splitType === 'share' && members.map(m => {
-            const userShare = parseInt(shares[m.id] || 0, 10);
-            const computedAmt = totalShares > 0 ? (parseFloat(totalAmount || 0) * (userShare / totalShares)).toFixed(2) : "0.00";
-            return (
-              <div key={m.id} className="flex items-center gap-4 mb-2">
-                <span className="w-32 truncate">{m.name}</span>
-                <div className="flex-1 flex items-center gap-2">
-                  <input 
-                    type="number" step="1" placeholder="1" className="w-24 p-2 border rounded focus:ring-2 focus:ring-primary"
-                    value={shares[m.id] !== undefined ? shares[m.id] : ''} 
-                    onChange={e => setShares(prev => ({ ...prev, [m.id]: e.target.value }))} 
-                  />
-                  <span>shares</span>
-                  <span className="text-gray-500 font-medium ml-4">${computedAmt}</span>
+            {splitType === 'percentage' && members.map(m => {
+              const pct = parseFloat(percentages[m.id] || 0);
+              const computedAmt = (parseFloat(totalAmount || 0) * (pct / 100)).toFixed(2);
+              return (
+                <div key={m.id} className="flex items-center gap-4">
+                  <span className="w-32 truncate text-slate-700 font-medium">{m.name}</span>
+                  <div className="flex-1 flex items-center gap-3">
+                    <div className="relative w-24">
+                      <input 
+                        type="number" step="0.01" placeholder="0" 
+                        className="w-full pr-6 p-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none transition text-right"
+                        value={percentages[m.id] !== undefined ? percentages[m.id] : ''} 
+                        onChange={e => setPercentages(prev => ({ ...prev, [m.id]: e.target.value }))} 
+                      />
+                      <span className="absolute right-3 top-2.5 text-slate-400 text-sm">%</span>
+                    </div>
+                    <span className="text-indigo-600 font-bold ml-2 w-20">${computedAmt}</span>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+
+            {splitType === 'share' && members.map(m => {
+              const userShare = parseInt(shares[m.id] || 0, 10);
+              const computedAmt = totalShares > 0 ? (parseFloat(totalAmount || 0) * (userShare / totalShares)).toFixed(2) : "0.00";
+              return (
+                <div key={m.id} className="flex items-center gap-4">
+                  <span className="w-32 truncate text-slate-700 font-medium">{m.name}</span>
+                  <div className="flex-1 flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <input 
+                        type="number" step="1" placeholder="1" 
+                        className="w-20 p-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none transition text-center"
+                        value={shares[m.id] !== undefined ? shares[m.id] : ''} 
+                        onChange={e => setShares(prev => ({ ...prev, [m.id]: e.target.value }))} 
+                      />
+                      <span className="text-slate-500 text-sm font-medium">shares</span>
+                    </div>
+                    <span className="text-indigo-600 font-bold ml-auto">${computedAmt}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
-        <div className="pt-4 border-t border-gray-100 flex gap-4">
-          <button type="button" onClick={() => navigate(-1)} className="px-6 py-3 border rounded-lg text-gray-600 hover:bg-gray-50">Cancel</button>
-          <button type="submit" className="flex-1 bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary-dark font-medium transition">Save Expense</button>
+        <div className="pt-4 flex gap-4">
+          <button type="button" onClick={() => navigate(-1)} className="px-6 py-3 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 font-semibold transition">Cancel</button>
+          <button type="submit" className="flex-1 bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 font-semibold transition shadow-sm">Save Expense</button>
         </div>
       </form>
     </div>

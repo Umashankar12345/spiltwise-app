@@ -88,78 +88,88 @@ const GroupDetail = () => {
   return (
     <div className="max-w-5xl mx-auto mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
       <div className="md:col-span-2 space-y-6">
-        <div className="flex justify-between items-center bg-white p-6 rounded-lg shadow-sm">
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <Receipt className="text-primary" /> Group Expenses
+        <div className="flex justify-between items-center bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+          <h2 className="text-2xl font-bold flex items-center gap-3 text-slate-900">
+            <Receipt className="w-6 h-6 text-indigo-600" /> Group Expenses
           </h2>
-          <Link to={`/groups/${id}/expenses/new`} className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition">
+          <Link to={`/groups/${id}/expenses/new`} className="bg-indigo-600 text-white px-5 py-2 rounded-lg hover:bg-indigo-700 transition font-medium shadow-sm">
             Add Expense
           </Link>
         </div>
 
         <div className="space-y-4">
           {expenses.map(exp => (
-            <Link key={exp.id} to={`/expenses/${exp.id}`}>
-              <div className="bg-white p-4 rounded-lg shadow-sm flex justify-between items-center hover:bg-gray-50 transition cursor-pointer border border-transparent hover:border-gray-200">
+            <Link key={exp.id} to={`/expenses/${exp.id}`} className="block">
+              <div className="bg-white p-5 rounded-xl shadow-sm flex justify-between items-center hover:shadow-md border border-slate-200 hover:border-indigo-300 transition-all duration-200 cursor-pointer">
                 <div>
-                  <h4 className="font-semibold">{exp.description}</h4>
-                  <p className="text-sm text-gray-500">{new Date(exp.created_at).toLocaleDateString()}</p>
+                  <h4 className="font-bold text-slate-900 text-lg mb-1">{exp.description}</h4>
+                  <p className="text-sm text-slate-500">{new Date(exp.created_at).toLocaleDateString()}</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold text-lg">${parseFloat(exp.total_amount).toFixed(2)}</p>
+                  <p className="font-extrabold text-xl text-slate-900">${parseFloat(exp.total_amount).toFixed(2)}</p>
                 </div>
               </div>
             </Link>
           ))}
-          {expenses.length === 0 && <p className="text-gray-500 text-center py-4">No expenses yet.</p>}
+          {expenses.length === 0 && (
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-10 text-center text-slate-500">
+              No expenses yet. Add one to get started!
+            </div>
+          )}
         </div>
       </div>
 
       <div className="space-y-6">
-        <div className="bg-white p-6 rounded-lg shadow-sm">
-          <h3 className="text-lg font-bold mb-4 flex items-center gap-2"><DollarSign className="text-primary" /> My Balance</h3>
-          <div className={`text-2xl font-bold ${myBalance > 0 ? 'text-green-600' : myBalance < 0 ? 'text-red-600' : 'text-gray-700'}`}>
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+          <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-slate-900">
+            <DollarSign className="w-5 h-5 text-indigo-600" /> My Balance
+          </h3>
+          <div className={`text-3xl font-extrabold ${myBalance > 0 ? 'text-emerald-600' : myBalance < 0 ? 'text-rose-600' : 'text-slate-700'}`}>
             {myBalance > 0 ? '+' : ''}{myBalance.toFixed(2)}
           </div>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-slate-500 mt-2 font-medium">
             {myBalance > 0 ? 'You are owed' : myBalance < 0 ? 'You owe' : 'Settled up'}
           </p>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm">
-          <h3 className="text-lg font-bold mb-4 flex items-center gap-2"><UserPlus className="text-primary" /> Invite Member</h3>
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+          <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-slate-900">
+            <UserPlus className="w-5 h-5 text-indigo-600" /> Invite Member
+          </h3>
           <form onSubmit={handleInvite}>
             <input 
               type="email" 
               placeholder="Email address" 
-              className="w-full p-2 border rounded-lg mb-2 focus:outline-none focus:ring-2 focus:ring-primary bg-gray-50"
+              className="w-full p-3 border border-slate-300 rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
               value={inviteEmail} 
               onChange={e => setInviteEmail(e.target.value)} 
               required 
             />
-            <button type="submit" className="w-full bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition font-medium">
+            <button type="submit" className="w-full bg-slate-100 text-slate-800 px-4 py-3 rounded-lg hover:bg-slate-200 transition font-semibold">
               Send Invite
             </button>
           </form>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm">
-          <h3 className="text-lg font-bold mb-4 flex items-center gap-2"><Users className="text-primary" /> Group Members</h3>
-          <div className="space-y-3">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+          <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-slate-900">
+            <Users className="w-5 h-5 text-indigo-600" /> Group Members
+          </h3>
+          <div className="space-y-2">
             {members.map(m => {
               const bal = balances[m.id] || 0;
               return (
-                <div key={m.id} className="flex justify-between items-center p-2 hover:bg-gray-50 rounded-lg">
+                <div key={m.id} className="flex justify-between items-center p-3 hover:bg-slate-50 rounded-lg transition-colors border border-transparent hover:border-slate-100">
                   <div>
-                    <p className="font-semibold text-sm">{m.name} {m.id === user?.id && '(You)'}</p>
-                    <p className={`text-xs ${bal > 0 ? 'text-green-600' : bal < 0 ? 'text-red-600' : 'text-gray-500'}`}>
+                    <p className="font-semibold text-slate-800 text-sm">{m.name} {m.id === user?.id && <span className="text-slate-400 font-normal">(You)</span>}</p>
+                    <p className={`text-xs font-medium mt-0.5 ${bal > 0 ? 'text-emerald-600' : bal < 0 ? 'text-rose-600' : 'text-slate-500'}`}>
                       {bal > 0 ? `gets $${bal.toFixed(2)}` : bal < 0 ? `owes $${Math.abs(bal).toFixed(2)}` : 'settled'}
                     </p>
                   </div>
                   {m.id !== user?.id && (
                     <button 
                       onClick={() => handleRemoveMember(m.id, m.name)}
-                      className="text-gray-400 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-full transition"
+                      className="text-slate-400 hover:text-rose-600 hover:bg-rose-50 p-2 rounded-full transition-all"
                       title="Remove member"
                     >
                       <Trash2 className="w-4 h-4" />

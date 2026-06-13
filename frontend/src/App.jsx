@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
 import { AuthProvider, AuthContext } from './context/AuthContext';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
@@ -38,15 +38,24 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <div className="min-h-screen bg-light">
-          <nav className="bg-primary text-white p-4 shadow-md flex justify-between items-center">
-            <h1 className="text-2xl font-bold">Splitwise Clone</h1>
-            <div className="flex space-x-4">
-              <a href="/groups" className="hover:text-gray-200">Groups</a>
-              <a href="/balances" className="hover:text-gray-200">Balances</a>
+        <div className="min-h-screen bg-slate-50 flex flex-col">
+          <nav className="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center shadow-sm">
+            <Link to="/groups" className="text-2xl font-extrabold text-indigo-600 tracking-tight">
+              Splitwise Clone
+            </Link>
+            <div className="flex space-x-6 items-center">
+              <Link to="/groups" className="text-slate-600 hover:text-indigo-600 font-medium transition">Groups</Link>
+              <Link to="/balances" className="text-slate-600 hover:text-indigo-600 font-medium transition">Balances</Link>
+              <AuthContext.Consumer>
+                {({ user, logout }) => user && (
+                  <button onClick={logout} className="bg-slate-100 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-200 transition">
+                    Logout
+                  </button>
+                )}
+              </AuthContext.Consumer>
             </div>
           </nav>
-          <main className="container mx-auto p-4">
+          <main className="container mx-auto p-4 flex-1">
             <AppRoutes />
           </main>
         </div>

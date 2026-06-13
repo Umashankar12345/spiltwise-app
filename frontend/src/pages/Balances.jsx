@@ -1,159 +1,150 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import { Wallet, ArrowRightLeft, X } from 'lucide-react';
+import { ArrowRight, CheckCircle2, WalletCards } from 'lucide-react';
 
 const Balances = () => {
-  const { token } = useContext(AuthContext);
-  const [balanceSummary, setBalanceSummary] = useState(null);
-  
-  // Settle Up Modal State
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedDebt, setSelectedDebt] = useState(null);
+  const { token, user } = useContext(AuthContext);
+  const [debts, setDebts] = useState([]);
+  const [settleDebt, setSettleDebt] = useState(null);
   const [settleAmount, setSettleAmount] = useState('');
 
   useEffect(() => {
-    fetchMyBalances();
+    fetchDebts();
   }, [token]);
 
-  const fetchMyBalances = async () => {
+  const fetchDebts = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/balances/me', {
+      const res = await fetch('http://localhost:5000/api/balances/debts', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      if (res.ok) {
-        setBalanceSummary(await res.json());
-      }
-    } catch (err) {
-      console.error(err);
-    }
+      if (res.ok) setDebts(await res.json());
+    } catch (err) { console.error(err); }
   };
 
-  const handleOpenModal = (debt) => {
-    setSelectedDebt(debt);
-    setSettleAmount(debt.amount.toFixed(2));
-    setIsModalOpen(true);
-  };
-
-  const handleSettleUp = async (e) => {
+  const handleSettle = async (e) => {
     e.preventDefault();
-    if (!selectedDebt) return;
-    
+    if (!settleDebt) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/groups/${selectedDebt.groupId}/settlements`, {
+      const res = await fetch(`http://localhost:5000/api/groups/${settleDebt.group_id}/expenses`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          paid_to: selectedDebt.owedToId,
-          amount: parseFloat(settleAmount)
+          description: 'Payment',
+          total_amount: settleAmount,
+          split_type: 'unequal',
+          payers: [{ user_id: user.id, amount_paid: settleAmount }],
+          splits: [{ user_id: settleDebt.owes_to_id, amount_owed: settleAmount, percentage: null, shares: null }]
         })
       });
-      
       if (res.ok) {
-        setIsModalOpen(false);
-        setSelectedDebt(null);
-        fetchMyBalances(); // Refresh balances
+        setSettleDebt(null);
+        setSettleAmount('');
+        fetchDebts();
       } else {
-        const data = await res.json();
-        alert(data.error || 'Failed to settle up');
+        alert('Failed to settle up');
       }
     } catch (err) {
       console.error(err);
     }
   };
 
-  if (!balanceSummary) return <div className="text-center mt-20">Loading...</div>;
-
-  const { totalPaid, totalOwed, netBalance, detailedDebts } = balanceSummary;
+  const openSettleModal = (debt) => {
+    setSettleDebt(debt);
+    setSettleAmount(parseFloat(debt.amount).toFixed(2));
+  };
 
   return (
-    <div className="max-w-3xl mx-auto mt-8">
-      <h2 className="text-3xl font-bold text-dark mb-8 flex items-center gap-2">
-        <Wallet className="w-8 h-8 text-primary" /> Cross-Group Balances
-      </h2>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-lg shadow-sm border-l-4 border-gray-400">
-          <p className="text-gray-500 text-sm font-medium mb-1">Total You Paid</p>
-          <p className="text-2xl font-bold">${totalPaid.toFixed(2)}</p>
-        </div>
-        <div className="bg-white p-6 rounded-lg shadow-sm border-l-4 border-red-400">
-          <p className="text-gray-500 text-sm font-medium mb-1">Total You Owe</p>
-          <p className="text-2xl font-bold">${totalOwed.toFixed(2)}</p>
-        </div>
-        <div className={`bg-white p-6 rounded-lg shadow-sm border-l-4 ${netBalance >= 0 ? 'border-green-500' : 'border-red-500'}`}>
-          <p className="text-gray-500 text-sm font-medium mb-1">Net Balance</p>
-          <p className={`text-2xl font-bold ${netBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-            {netBalance >= 0 ? '+' : ''}${netBalance.toFixed(2)}
-          </p>
-        </div>
+    <div className="max-w-4xl mx-auto mt-8">
+      <div className="flex items-center gap-3 mb-8">
+        <WalletCards className="w-8 h-8 text-indigo-600" />
+        <h2 className="text-3xl font-extrabold text-slate-900">All Balances</h2>
       </div>
 
-      <div className="bg-white p-6 rounded-lg shadow-sm mb-8">
-        <h3 className="text-xl font-semibold mb-4">Detailed Debts (Who you owe)</h3>
-        {detailedDebts && detailedDebts.length > 0 ? (
-          <div className="space-y-4">
-            {detailedDebts.map((debt, idx) => (
-              <div key={idx} className="flex justify-between items-center p-4 bg-gray-50 rounded-lg border border-gray-100">
-                <div>
-                  <p className="font-semibold text-gray-800">You owe {debt.owedToName}</p>
-                  <p className="text-sm text-gray-500">Group ID: {debt.groupId}</p>
-                </div>
-                <div className="flex items-center gap-4">
-                  <p className="text-lg font-bold text-red-500">${debt.amount.toFixed(2)}</p>
-                  <button 
-                    onClick={() => handleOpenModal(debt)}
-                    className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition text-sm font-medium"
-                  >
-                    Settle Up
-                  </button>
-                </div>
-              </div>
-            ))}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        {debts.length === 0 ? (
+          <div className="p-12 text-center text-slate-500 font-medium">
+            You are all settled up! No active debts.
           </div>
         ) : (
-          <p className="text-gray-500">You don't owe anyone right now. Great job!</p>
+          <div className="divide-y divide-slate-100">
+            {debts.map((debt, index) => {
+              const isOwedByMe = debt.who_owes_id === user?.id;
+              const otherPersonName = isOwedByMe ? debt.owes_to_name : debt.who_owes_name;
+              
+              return (
+                <div key={index} className="p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:bg-slate-50 transition-colors">
+                  <div>
+                    <h3 className="font-bold text-slate-900 text-lg mb-1">{otherPersonName}</h3>
+                    <p className="text-sm text-slate-500 font-medium">Group: {debt.group_name}</p>
+                  </div>
+                  <div className="flex items-center gap-6 w-full md:w-auto justify-between md:justify-end">
+                    <div className="flex flex-col items-end">
+                      <p className={`font-medium text-sm mb-1 ${isOwedByMe ? 'text-rose-600' : 'text-emerald-600'}`}>
+                        {isOwedByMe ? 'You owe' : 'Owes you'}
+                      </p>
+                      <p className={`text-2xl font-extrabold ${isOwedByMe ? 'text-rose-600' : 'text-emerald-600'}`}>
+                        ${parseFloat(debt.amount).toFixed(2)}
+                      </p>
+                    </div>
+                    {isOwedByMe && (
+                      <button 
+                        onClick={() => openSettleModal(debt)}
+                        className="bg-indigo-600 text-white px-5 py-2.5 rounded-lg hover:bg-indigo-700 transition font-semibold shadow-sm flex items-center gap-2"
+                      >
+                        <CheckCircle2 className="w-5 h-5" /> Settle
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
 
-      {/* Settle Up Modal */}
-      {isModalOpen && selectedDebt && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-md relative">
-            <button 
-              onClick={() => setIsModalOpen(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-            >
-              <X className="w-6 h-6" />
-            </button>
-            <h3 className="text-2xl font-bold mb-6">Settle Up</h3>
-            <form onSubmit={handleSettleUp}>
-              <div className="mb-4">
-                <label className="block text-gray-700 font-medium mb-2">
-                  Paying <strong>{selectedDebt.owedToName}</strong>
-                </label>
+      {settleDebt && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl p-8 max-w-md w-full shadow-xl">
+            <h3 className="text-2xl font-extrabold text-slate-900 mb-6">Settle Up</h3>
+            <p className="mb-6 text-slate-600 flex items-center gap-3 p-4 bg-slate-50 rounded-lg border border-slate-200">
+              <span className="font-bold text-slate-900">{user.name}</span>
+              <ArrowRight className="w-5 h-5 text-indigo-400" />
+              <span className="font-bold text-slate-900">{settleDebt.owes_to_name}</span>
+            </p>
+            <form onSubmit={handleSettle} className="space-y-6">
+              <div>
+                <label className="block text-slate-700 font-semibold mb-2 text-sm">Amount</label>
                 <div className="relative">
-                  <span className="absolute left-3 top-3 text-gray-500">$</span>
+                  <span className="absolute left-4 top-3.5 text-slate-500 font-medium">$</span>
                   <input 
                     type="number" 
                     step="0.01"
-                    className="w-full p-3 pl-8 border rounded-lg focus:ring-2 focus:ring-primary focus:outline-none"
+                    max={parseFloat(settleDebt.amount).toFixed(2)}
+                    className="w-full p-3 pl-8 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition text-lg font-medium"
                     value={settleAmount} 
                     onChange={e => setSettleAmount(e.target.value)} 
-                    max={selectedDebt.amount}
                     required 
                   />
                 </div>
-                <p className="text-sm text-gray-500 mt-2">Maximum you can settle: ${selectedDebt.amount.toFixed(2)}</p>
               </div>
-              <button 
-                type="submit" 
-                className="w-full bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 font-medium transition"
-              >
-                Record Payment
-              </button>
+              <div className="flex gap-4 pt-2">
+                <button 
+                  type="button" 
+                  onClick={() => setSettleDebt(null)} 
+                  className="flex-1 px-4 py-3 border border-slate-300 rounded-lg text-slate-700 font-semibold hover:bg-slate-50 transition"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="flex-1 bg-indigo-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition shadow-sm"
+                >
+                  Record Payment
+                </button>
+              </div>
             </form>
           </div>
         </div>
