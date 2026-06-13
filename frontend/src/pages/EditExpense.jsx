@@ -21,7 +21,7 @@ const EditExpense = () => {
   useEffect(() => {
     const fetchExpenseDetails = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/expenses/${id}`, {
+        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/expenses/${id}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (!res.ok) throw new Error('Failed to fetch expense');
@@ -51,7 +51,7 @@ const EditExpense = () => {
         setPercentages(initialPcts);
         setShares(initialShares);
 
-        const membersRes = await fetch(`http://localhost:5000/api/groups/${data.group_id}/members`, {
+        const membersRes = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/groups/${data.group_id}/members`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (membersRes.ok) {
@@ -132,7 +132,7 @@ const EditExpense = () => {
     }
 
     try {
-      const res = await fetch(`http://localhost:5000/api/expenses/${id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/expenses/${id}`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',

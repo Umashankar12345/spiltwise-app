@@ -17,7 +17,7 @@ const Groups = () => {
   const fetchGroups = async () => {
     if (!token) return;
     try {
-      const response = await fetch('http://localhost:5000/api/groups', {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/groups`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
@@ -34,7 +34,7 @@ const Groups = () => {
   const fetchInvites = async () => {
     if (!token) return;
     try {
-      const response = await fetch('http://localhost:5000/api/groups/invites/pending', {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/groups/invites/pending`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
@@ -51,7 +51,7 @@ const Groups = () => {
   const handleCreateGroup = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:5000/api/groups', {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/groups`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -70,7 +70,7 @@ const Groups = () => {
 
   const handleAcceptInvite = async (groupId, inviteId) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/groups/${groupId}/invites/${inviteId}/accept`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/groups/${groupId}/invites/${inviteId}/accept`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });

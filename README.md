@@ -1,67 +1,68 @@
-# Splitwise Clone
+# Splitwise Clone 💸
 
-A full-stack web application designed to track shared expenses, compute balances, and settle debts within groups. Built with React, Node.js, Express, and PostgreSQL.
+A fully-featured, full-stack replica of Splitwise built with the PERN stack (PostgreSQL, Express, React, Node.js). 
 
-This project was built iteratively alongside the **Antigravity AI Assistant**, executing a full product specification from requirements gathering through schema design, backend development, and frontend implementation.
+> **Built with Antigravity** – This project was entirely architected, written, and refined by Antigravity (a powerful agentic AI coding assistant designed by the Google DeepMind team).
 
-## Tech Stack
-- **Frontend**: React (Vite), Tailwind CSS v4, React Router, Socket.io-client
-- **Backend**: Node.js, Express.js, Socket.io (for real-time chat)
-- **Database**: PostgreSQL (raw SQL via `pg` driver, no ORM)
-- **Authentication**: JWT (JSON Web Tokens)
+## ✨ Features
+- **Comprehensive Expense Splitting**: Supports Equal, Unequal (exact amounts), Percentage, and Share-based splits with multiple payers.
+- **Group Management**: Create groups, send email invites (simulated), accept invites, and safely remove members.
+- **Real-Time Chat**: Discuss expenses in a live Socket.io chat thread with inline Edit/Delete functionality.
+- **Debt Resolution**: Live, dynamically calculated debts mapped across groups, with a secure "Settle Up" modal.
+- **Modern UI**: Fully responsive frontend built with Tailwind CSS, featuring a polished Indigo/Slate aesthetic.
 
-## Local Development Setup
+## 🚀 Live Deployment
+- **Frontend App**: *[Pending Render Deployment URL]*
+- **Backend API**: *[Pending Render Deployment URL]*
 
-To run this application locally, you will need Node.js and Docker installed.
+*Note: The app is configured for 1-click deployment on Render using the included `render.yaml` infrastructure-as-code file.*
 
-### 1. Start the Database
-A `docker-compose.yml` file is provided to quickly spin up a local PostgreSQL 15 instance.
+## 💻 Local Setup
 
-```bash
-# Start the database container in the background
-docker-compose up -d
-```
-*Note: This creates a database named `splitwise` with user `user` and password `password` exposed on port 5432.*
+### Prerequisites
+- Node.js (v18+)
+- Docker & Docker Compose (for the PostgreSQL database)
 
-### 2. Set Up the Backend
-The backend manages the REST API and Socket.io server.
+### Installation
+1. **Clone the repository**
+   ```bash
+   git clone <your-repo-url>
+   cd spiltwise-app
+   ```
 
-```bash
-cd backend
-npm install
-```
+2. **Start the PostgreSQL Database**
+   Ensure Docker Desktop is running, then spin up the database container:
+   ```bash
+   docker-compose up -d
+   ```
+   *The initialization script (`backend/init.sql`) will automatically create the tables on the first run.*
 
-Create a `.env` file in the `backend/` directory with the following variables:
-```env
-PORT=5000
-DATABASE_URL=postgresql://user:password@localhost:5432/splitwise
-JWT_SECRET=supersecretjwtkey
-```
+3. **Configure Backend Environment Variables**
+   Create a `.env` file in the `backend/` directory:
+   ```env
+   PORT=5000
+   DATABASE_URL=postgresql://user:password@localhost:5432/splitwise
+   JWT_SECRET=your_super_secret_jwt_key
+   ```
 
-Run the database initialization script to create the schema:
-```bash
-# Assuming you have psql installed locally, otherwise you can execute this inside the docker container
-psql -U user -d splitwise -h localhost -f init.sql
-```
+4. **Start the Backend Server**
+   ```bash
+   cd backend
+   npm install
+   npm run dev
+   ```
 
-Start the backend server:
-```bash
-npm run dev
-```
+5. **Start the Frontend App**
+   Open a new terminal window:
+   ```bash
+   cd frontend
+   npm install
+   npm run dev
+   ```
 
-### 3. Set Up the Frontend
-The frontend is a Vite-powered React application.
+6. **Open your browser**
+   Navigate to `http://localhost:5173` to view the app!
 
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-The frontend will be available at `http://localhost:5173`.
-
----
-
-## Known Limitations & Testing
-- Automated testing was omitted in this build phase due to time constraints; manual verification was prioritized.
-- Group invites currently rely on the invited email address subsequently registering an account. A full unregistered-token flow is not yet implemented.
+## 🧩 Known Limitations
+- Automated tests (unit & integration) are not included. Verification was performed manually.
+- The "Invite Member" functionality does not currently send actual emails; it relies on the invited user registering with the matching email address.

@@ -20,7 +20,7 @@ const AddExpense = () => {
   useEffect(() => {
     const fetchMembers = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/groups/${id}/members`, {
+        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/groups/${id}/members`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (res.ok) {
@@ -100,7 +100,7 @@ const AddExpense = () => {
     }
 
     try {
-      const res = await fetch(`http://localhost:5000/api/groups/${id}/expenses`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/groups/${id}/expenses`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

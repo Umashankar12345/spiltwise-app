@@ -18,7 +18,7 @@ const ExpenseDetail = () => {
   const [editingMsgText, setEditingMsgText] = useState('');
 
   useEffect(() => {
-    fetch(`http://localhost:5000/api/expenses/${id}`, {
+    fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/expenses/${id}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
     .then(res => {
@@ -28,14 +28,14 @@ const ExpenseDetail = () => {
     .then(data => setExpense(data))
     .catch(err => console.error(err));
 
-    fetch(`http://localhost:5000/api/expenses/${id}/messages`, {
+    fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/expenses/${id}/messages`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
     .then(res => res.json())
     .then(data => setMessages(data))
     .catch(err => console.error(err));
 
-    const newSocket = io('http://localhost:5000');
+    const newSocket = io(import.meta.env.VITE_API_BASE_URL || `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}`);
     setSocket(newSocket);
 
     newSocket.on('connect', () => {
@@ -89,7 +89,7 @@ const ExpenseDetail = () => {
   const handleDeleteExpense = async () => {
     if (!window.confirm('Delete this expense completely? This will affect balances.')) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/expenses/${id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/expenses/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });

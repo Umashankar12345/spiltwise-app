@@ -14,7 +14,7 @@ const Balances = () => {
 
   const fetchDebts = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/balances/debts', {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/balances/debts`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) setDebts(await res.json());
@@ -25,7 +25,7 @@ const Balances = () => {
     e.preventDefault();
     if (!settleDebt) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/groups/${settleDebt.group_id}/expenses`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/groups/${settleDebt.group_id}/expenses`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

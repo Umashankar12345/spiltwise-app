@@ -19,7 +19,7 @@ const GroupDetail = () => {
 
   const fetchExpenses = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/groups/${id}/expenses`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/groups/${id}/expenses`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) setExpenses(await res.json());
@@ -28,7 +28,7 @@ const GroupDetail = () => {
 
   const fetchBalances = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/groups/${id}/balances`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/groups/${id}/balances`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) setBalances(await res.json());
@@ -37,7 +37,7 @@ const GroupDetail = () => {
 
   const fetchMembers = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/groups/${id}/members`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/groups/${id}/members`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) setMembers(await res.json());
@@ -47,7 +47,7 @@ const GroupDetail = () => {
   const handleInvite = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`http://localhost:5000/api/groups/${id}/invite`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/groups/${id}/invite`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -68,7 +68,7 @@ const GroupDetail = () => {
   const handleRemoveMember = async (userId, userName) => {
     if (!window.confirm(`Are you sure you want to remove ${userName} from the group?`)) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/groups/${id}/members/${userId}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/groups/${id}/members/${userId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
