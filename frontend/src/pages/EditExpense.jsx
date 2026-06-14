@@ -12,7 +12,7 @@ const EditExpense = () => {
   const [totalAmount, setTotalAmount] = useState('');
   const [splitType, setSplitType] = useState('equal');
   const [members, setMembers] = useState([]);
-  
+
   const [payers, setPayers] = useState({});
   const [splits, setSplits] = useState({});
   const [percentages, setPercentages] = useState({});
@@ -40,13 +40,13 @@ const EditExpense = () => {
         const initialSplits = {};
         const initialPcts = {};
         const initialShares = {};
-        
+
         data.splits.forEach(s => {
           if (data.split_type === 'unequal') initialSplits[s.user_id] = s.amount_owed;
           if (data.split_type === 'percentage') initialPcts[s.user_id] = s.percentage;
           if (data.split_type === 'share') initialShares[s.user_id] = s.shares;
         });
-        
+
         setSplits(initialSplits);
         setPercentages(initialPcts);
         setShares(initialShares);
@@ -82,7 +82,7 @@ const EditExpense = () => {
         finalPayers.push({ user_id: uid, amount_paid: parsedAmt });
       }
     }
-    
+
     const expenseTotal = parseFloat(totalAmount);
     if (Math.abs(calcTotal - expenseTotal) > 0.01) {
       alert(`Total paid ($${calcTotal.toFixed(2)}) does not match expense amount ($${expenseTotal.toFixed(2)})`);
@@ -134,7 +134,7 @@ const EditExpense = () => {
     try {
       const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/expenses/${id}`, {
         method: 'PUT',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
@@ -167,31 +167,31 @@ const EditExpense = () => {
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label className="block text-slate-700 font-semibold mb-2 text-sm">Description</label>
-          <input 
-            type="text" 
+          <input
+            type="text"
             placeholder="e.g. Dinner at Mario's"
             className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
-            value={description} 
-            onChange={e => setDescription(e.target.value)} 
-            required 
+            value={description}
+            onChange={e => setDescription(e.target.value)}
+            required
           />
         </div>
         <div>
           <label className="block text-slate-700 font-semibold mb-2 text-sm">Total Amount</label>
           <div className="relative">
             <span className="absolute left-4 top-3.5 text-slate-500 font-medium">$</span>
-            <input 
-              type="number" 
+            <input
+              type="number"
               step="0.01"
               placeholder="0.00"
               className="w-full p-3 pl-8 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition text-lg font-medium"
-              value={totalAmount} 
-              onChange={e => setTotalAmount(e.target.value)} 
-              required 
+              value={totalAmount}
+              onChange={e => setTotalAmount(e.target.value)}
+              required
             />
           </div>
         </div>
-        
+
         <div className="bg-slate-50 p-5 rounded-xl border border-slate-200">
           <label className="block text-slate-800 font-bold mb-3">Who Paid?</label>
           <div className="space-y-3">
@@ -200,13 +200,13 @@ const EditExpense = () => {
                 <span className="w-32 truncate text-slate-700 font-medium">{m.name}</span>
                 <div className="relative flex-1">
                   <span className="absolute left-3 top-2.5 text-slate-400 text-sm">$</span>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     step="0.01"
                     placeholder="0.00"
                     className="w-full pl-7 p-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none transition"
-                    value={payers[m.id] !== undefined ? payers[m.id] : ''} 
-                    onChange={e => handlePayerChange(m.id, e.target.value)} 
+                    value={payers[m.id] !== undefined ? payers[m.id] : ''}
+                    onChange={e => handlePayerChange(m.id, e.target.value)}
                   />
                 </div>
               </div>
@@ -216,7 +216,7 @@ const EditExpense = () => {
 
         <div className="bg-slate-50 p-5 rounded-xl border border-slate-200">
           <label className="block text-slate-800 font-bold mb-3">Split Type</label>
-          <select 
+          <select
             className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none mb-5 bg-white transition text-slate-700"
             value={splitType}
             onChange={e => setSplitType(e.target.value)}
@@ -233,13 +233,13 @@ const EditExpense = () => {
                 <span className="w-32 truncate text-slate-700 font-medium">{m.name}</span>
                 <div className="relative flex-1">
                   <span className="absolute left-3 top-2.5 text-slate-400 text-sm">$</span>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     step="0.01"
                     placeholder="0.00"
                     className="w-full pl-7 p-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none transition"
-                    value={splits[m.id] !== undefined ? splits[m.id] : ''} 
-                    onChange={e => setSplits(prev => ({ ...prev, [m.id]: e.target.value }))} 
+                    value={splits[m.id] !== undefined ? splits[m.id] : ''}
+                    onChange={e => setSplits(prev => ({ ...prev, [m.id]: e.target.value }))}
                   />
                 </div>
               </div>
@@ -253,11 +253,11 @@ const EditExpense = () => {
                   <span className="w-32 truncate text-slate-700 font-medium">{m.name}</span>
                   <div className="flex-1 flex items-center gap-3">
                     <div className="relative w-24">
-                      <input 
-                        type="number" step="0.01" placeholder="0" 
+                      <input
+                        type="number" step="0.01" placeholder="0"
                         className="w-full pr-6 p-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none transition text-right"
-                        value={percentages[m.id] !== undefined ? percentages[m.id] : ''} 
-                        onChange={e => setPercentages(prev => ({ ...prev, [m.id]: e.target.value }))} 
+                        value={percentages[m.id] !== undefined ? percentages[m.id] : ''}
+                        onChange={e => setPercentages(prev => ({ ...prev, [m.id]: e.target.value }))}
                       />
                       <span className="absolute right-3 top-2.5 text-slate-400 text-sm">%</span>
                     </div>
@@ -275,11 +275,11 @@ const EditExpense = () => {
                   <span className="w-32 truncate text-slate-700 font-medium">{m.name}</span>
                   <div className="flex-1 flex items-center gap-3">
                     <div className="flex items-center gap-2">
-                      <input 
-                        type="number" step="1" placeholder="1" 
+                      <input
+                        type="number" step="1" placeholder="1"
                         className="w-20 p-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none transition text-center"
-                        value={shares[m.id] !== undefined ? shares[m.id] : ''} 
-                        onChange={e => setShares(prev => ({ ...prev, [m.id]: e.target.value }))} 
+                        value={shares[m.id] !== undefined ? shares[m.id] : ''}
+                        onChange={e => setShares(prev => ({ ...prev, [m.id]: e.target.value }))}
                       />
                       <span className="text-slate-500 text-sm font-medium">shares</span>
                     </div>
