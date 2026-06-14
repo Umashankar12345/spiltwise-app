@@ -11,11 +11,6 @@ services:
         sync: false
       - key: JWT_SECRET
         generateValue: true
-      - key: FRONTEND_URL
-        fromService:
-          type: web
-          name: splitwise-frontend
-          envVarKey: RENDER_EXTERNAL_URL
 
   - type: web
     name: splitwise-frontend
