@@ -6,6 +6,7 @@ A fully-featured, full-stack replica of Splitwise built with the PERN stack (Pos
 
 ## ✨ Features
 - **Comprehensive Expense Splitting**: Supports Equal, Unequal (exact amounts), Percentage, and Share-based splits with multiple payers.
+- **CSV Expense Import**: Bulk import expenses from a CSV file. Includes built-in anomaly detection (negative amounts, missing descriptions, invalid users) and generates detailed Import Reports.
 - **Group Management**: Create groups, send email invites (simulated), accept invites, and safely remove members.
 - **Real-Time Chat**: Discuss expenses in a live Socket.io chat thread with inline Edit/Delete functionality.
 - **Debt Resolution**: Live, dynamically calculated debts mapped across groups, with a secure "Settle Up" modal.

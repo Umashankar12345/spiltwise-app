@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { Receipt, DollarSign, UserPlus, Trash2, Users } from 'lucide-react';
+import { Receipt, DollarSign, UserPlus, Trash2, Users, UploadCloud } from 'lucide-react';
 
 const GroupDetail = () => {
   const { id } = useParams();
@@ -10,6 +10,8 @@ const GroupDetail = () => {
   const [balances, setBalances] = useState({});
   const [members, setMembers] = useState([]);
   const [inviteEmail, setInviteEmail] = useState('');
+  const [importReport, setImportReport] = useState(null);
+  const [isImporting, setIsImporting] = useState(false);
 
   useEffect(() => {
     fetchExpenses();
@@ -83,6 +85,37 @@ const GroupDetail = () => {
     }
   };
 
+  const handleImport = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setIsImporting(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/groups/${id}/expenses/import`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setImportReport(data);
+        fetchExpenses();
+        fetchBalances();
+      } else {
+        alert(data.error || 'Import failed');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error importing file');
+    } finally {
+      setIsImporting(false);
+      e.target.value = null;
+    }
+  };
+
   const myBalance = balances[user?.id] || 0;
 
   return (
@@ -92,9 +125,16 @@ const GroupDetail = () => {
           <h2 className="text-2xl font-bold flex items-center gap-3 text-slate-900">
             <Receipt className="w-6 h-6 text-indigo-600" /> Group Expenses
           </h2>
-          <Link to={`/groups/${id}/expenses/new`} className="bg-indigo-600 text-white px-5 py-2 rounded-lg hover:bg-indigo-700 transition font-medium shadow-sm">
-            Add Expense
-          </Link>
+          <div className="flex gap-3">
+            <label className="cursor-pointer bg-slate-100 text-slate-700 px-5 py-2 rounded-lg hover:bg-slate-200 transition font-medium shadow-sm flex items-center gap-2">
+              <UploadCloud className="w-4 h-4" />
+              {isImporting ? 'Importing...' : 'Import CSV'}
+              <input type="file" accept=".csv" className="hidden" onChange={handleImport} disabled={isImporting} />
+            </label>
+            <Link to={`/groups/${id}/expenses/new`} className="bg-indigo-600 text-white px-5 py-2 rounded-lg hover:bg-indigo-700 transition font-medium shadow-sm">
+              Add Expense
+            </Link>
+          </div>
         </div>
 
         <div className="space-y-4">
@@ -181,6 +221,56 @@ const GroupDetail = () => {
           </div>
         </div>
       </div>
+
+      {importReport && (
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[80vh] flex flex-col overflow-hidden">
+            <div className="p-6 border-b border-slate-200">
+              <h3 className="text-xl font-bold text-slate-900">Import Report</h3>
+            </div>
+            <div className="p-6 overflow-y-auto flex-1">
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="bg-indigo-50 p-4 rounded-lg">
+                  <p className="text-sm text-indigo-600 font-semibold mb-1">Total Rows Processed</p>
+                  <p className="text-2xl font-bold text-indigo-900">{importReport.totalRows}</p>
+                </div>
+                <div className="bg-emerald-50 p-4 rounded-lg">
+                  <p className="text-sm text-emerald-600 font-semibold mb-1">Expenses Imported</p>
+                  <p className="text-2xl font-bold text-emerald-900">{importReport.insertedCount}</p>
+                </div>
+              </div>
+              
+              <h4 className="font-bold text-slate-800 mb-3">Anomalies Detected ({importReport.anomalies.length})</h4>
+              {importReport.anomalies.length > 0 ? (
+                <div className="space-y-3">
+                  {importReport.anomalies.map((anom, i) => (
+                    <div key={i} className="bg-rose-50 border border-rose-100 p-3 rounded-lg text-sm">
+                      <div className="flex justify-between items-start mb-2">
+                        <span className="font-bold text-rose-700">Row {anom.row}</span>
+                        <span className="bg-rose-200 text-rose-800 text-xs px-2 py-1 rounded font-medium">{anom.action}</span>
+                      </div>
+                      <p className="text-rose-900 mb-2"><strong>Issue:</strong> {anom.issue}</p>
+                      <div className="bg-white/50 p-2 rounded border border-rose-100 font-mono text-xs text-rose-800 overflow-x-auto">
+                        {JSON.stringify(anom.data)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-slate-500">No anomalies detected. Clean import!</p>
+              )}
+            </div>
+            <div className="p-6 border-t border-slate-200 flex justify-end">
+              <button 
+                onClick={() => setImportReport(null)}
+                className="bg-slate-800 text-white px-5 py-2 rounded-lg hover:bg-slate-900 transition font-medium"
+              >
+                Close Report
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

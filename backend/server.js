@@ -4,6 +4,19 @@ const http = require('http');
 const { Server } = require('socket.io');
 require('dotenv').config();
 const db = require('./db');
+const fs = require('fs');
+const path = require('path');
+
+// Auto-initialize the database using init.sql
+try {
+  const initSqlPath = path.join(__dirname, 'init.sql');
+  const initSql = fs.readFileSync(initSqlPath, 'utf8');
+  db.query(initSql)
+    .then(() => console.log('Database initialized successfully.'))
+    .catch(err => console.error('Error initializing database (tables might already exist):', err));
+} catch (err) {
+  console.error('Could not read init.sql:', err);
+}
 
 const app = express();
 const server = http.createServer(app);

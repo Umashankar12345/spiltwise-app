@@ -1,0 +1,25 @@
+=======================================
+        CSV IMPORT REPORT
+=======================================
+Total Rows Processed: 5
+Successfully Imported: 2
+Anomalies Detected: 3
+
+---------------------------------------
+ANOMALIES LOG:
+---------------------------------------
+Row 2:
+- Action Taken: Skipped row
+- Issue: PaidByEmail is missing or not a member of the group
+- Data: {"Date":"2023-10-02","Description":"Dinner","Amount":"45.00","PaidByEmail":"unknown@example.com"}
+
+Row 4:
+- Action Taken: Set description to "Imported Expense"
+- Issue: Missing Description
+- Data: {"Date":"2023-10-04","Description":"","Amount":"20.00","PaidByEmail":"alice@example.com"}
+
+Row 5:
+- Action Taken: Skipped row
+- Issue: Invalid or missing Amount
+- Data: {"Date":"2023-10-05","Description":"Coffee","Amount":"-5.00","PaidByEmail":"alice@example.com"}
+=======================================

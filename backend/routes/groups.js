@@ -380,4 +380,130 @@ router.get('/:id/balances', async (req, res) => {
   }
 });
 
+const multer = require('multer');
+const csvParser = require('csv-parser');
+const fs = require('fs');
+
+const upload = multer({ dest: 'uploads/' });
+
+// POST /api/groups/:id/expenses/import
+router.post('/:id/expenses/import', upload.single('file'), async (req, res) => {
+  const { id } = req.params;
+  const filePath = req.file?.path;
+  
+  if (!filePath) {
+    return res.status(400).json({ error: 'No file uploaded' });
+  }
+
+  const anomalies = [];
+  const validExpenses = [];
+  let rowCount = 0;
+
+  try {
+    // 1. Get group members
+    const membersRes = await db.query(
+      `SELECT u.id, u.email FROM group_members gm JOIN users u ON gm.user_id = u.id WHERE gm.group_id = $1`,
+      [id]
+    );
+    const members = membersRes.rows;
+    const memberEmails = members.map(m => m.email);
+
+    if (members.length === 0) {
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+      return res.status(400).json({ error: 'Group has no members' });
+    }
+
+    fs.createReadStream(filePath)
+      .pipe(csvParser())
+      .on('data', (data) => {
+        rowCount++;
+        let isAnomaly = false;
+        
+        // Expected columns: Date, Description, Amount, PaidByEmail
+        let { Date, Description, Amount, PaidByEmail } = data;
+        
+        // Check for anomalies
+        if (!Amount || isNaN(parseFloat(Amount)) || parseFloat(Amount) <= 0) {
+          anomalies.push({ row: rowCount, issue: 'Invalid or missing Amount', action: 'Skipped row', data });
+          isAnomaly = true;
+        }
+
+        if (!PaidByEmail || !memberEmails.includes(PaidByEmail)) {
+          anomalies.push({ row: rowCount, issue: 'PaidByEmail is missing or not a member of the group', action: 'Skipped row', data });
+          isAnomaly = true;
+        }
+
+        if (!Description || Description.trim() === '') {
+          anomalies.push({ row: rowCount, issue: 'Missing Description', action: 'Set description to "Imported Expense"', data });
+          Description = 'Imported Expense';
+        }
+
+        if (!isAnomaly) {
+          validExpenses.push({
+            description: Description,
+            amount: parseFloat(Amount),
+            paidByEmail: PaidByEmail,
+            date: Date
+          });
+        }
+      })
+      .on('end', async () => {
+        let insertedCount = 0;
+        try {
+          await db.query('BEGIN');
+          for (const exp of validExpenses) {
+            const payer = members.find(m => m.email === exp.paidByEmail);
+            
+            const expenseRes = await db.query(
+              `INSERT INTO expenses (group_id, description, total_amount, split_type, created_by) 
+               VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+              [id, exp.description, exp.amount, 'equal', req.user.id]
+            );
+            const expenseId = expenseRes.rows[0].id;
+
+            await db.query(
+              'INSERT INTO expense_payers (expense_id, user_id, amount_paid) VALUES ($1, $2, $3)',
+              [expenseId, payer.id, exp.amount]
+            );
+
+            const splitAmount = Math.round((exp.amount / members.length) * 100) / 100;
+            let calculatedSum = 0;
+
+            for (let i = 0; i < members.length; i++) {
+              let amt = splitAmount;
+              calculatedSum += amt;
+              if (i === members.length - 1) {
+                let diff = Math.round((exp.amount - calculatedSum) * 100) / 100;
+                amt = Math.round((amt + diff) * 100) / 100;
+              }
+              await db.query(
+                `INSERT INTO expense_splits (expense_id, user_id, amount_owed) VALUES ($1, $2, $3)`,
+                [expenseId, members[i].id, amt]
+              );
+            }
+            insertedCount++;
+          }
+          await db.query('COMMIT');
+          if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+
+          res.json({
+            message: 'Import complete',
+            totalRows: rowCount,
+            insertedCount,
+            anomalies
+          });
+        } catch (dbErr) {
+          await db.query('ROLLBACK');
+          console.error(dbErr);
+          if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+          res.status(500).json({ error: 'Database error during import' });
+        }
+      });
+  } catch (err) {
+    console.error(err);
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 module.exports = router;
